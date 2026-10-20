@@ -64,6 +64,10 @@ internal sealed class PrintScreenGuideForm : Form
             _settingCard.BackColor = _highlighted ? Color.FromArgb(255, 215, 110) : Color.FromArgb(255, 244, 204);
         };
         _pulseTimer.Start();
-        FormClosed += (_, _) => _pulseTimer.Dispose();
+    }
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing) _pulseTimer?.Dispose();
+        base.Dispose(disposing);
     }
 }

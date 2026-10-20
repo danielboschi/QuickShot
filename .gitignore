@@ -4,6 +4,7 @@ obj/
 publish/
 dist/
 *.log
+*.log.old
 .vs/
 *.user
 *.suo

@@ -16,16 +16,29 @@ public partial class SelectionOverlay : Window
     private bool _editing;
     private DrawingSurface? _editor;
     private Border? _toolbar;
-    private readonly BitmapSource _desktopSnapshot;
-    private BitmapSource? _selectedImage;
+    private BitmapSource? _desktopSnapshot;
     public SelectionOverlay()
     {
-        InitializeComponent();
         var bounds = System.Windows.Forms.SystemInformation.VirtualScreen;
-        Left = bounds.Left; Top = bounds.Top; Width = bounds.Width; Height = bounds.Height;
-        // A captura acontece antes de a camada translúcida existir na tela.
+        // Preserve inclusive os tooltips antes de criar ou ativar a janela de seleção.
         _desktopSnapshot = ScreenCapture.Capture(new Rect(bounds.Left, bounds.Top, bounds.Width, bounds.Height));
+        InitializeComponent();
+        Left = bounds.Left; Top = bounds.Top; Width = bounds.Width; Height = bounds.Height;
+        // A seleção e o recorte usam a mesma imagem; o desktop ao vivo fica coberto.
+        Background = new ImageBrush(_desktopSnapshot) { Stretch = Stretch.Fill };
         DebugLog.Write("Snapshot do desktop criado antes da seleção.");
+    }
+    protected override void OnClosed(EventArgs e)
+    {
+        // A primeira Window pode continuar referenciada por Application.MainWindow.
+        // Libere imagens, anotações e histórico mesmo antes da próxima coleta de lixo.
+        Background = null;
+        _desktopSnapshot = null;
+        _editor?.ClearImage();
+        Surface.Children.Clear();
+        _editor = null; _toolbar = null;
+        if (ReferenceEquals(Application.Current.MainWindow, this)) Application.Current.MainWindow = null;
+        base.OnClosed(e);
     }
     private void OnMouseDown(object sender, MouseButtonEventArgs e)
     {
@@ -45,7 +58,6 @@ public partial class SelectionOverlay : Window
             var crop = new Int32Rect((int)Math.Round(rect.X - Left), (int)Math.Round(rect.Y - Top), (int)Math.Round(rect.Width), (int)Math.Round(rect.Height));
             var image = new CroppedBitmap(_desktopSnapshot, crop);
             image.Freeze();
-            _selectedImage = image;
             StartEditing(image, new Rect(x, y, rect.Width, rect.Height));
         }
         catch (Exception exception)
@@ -139,21 +151,8 @@ public partial class SelectionOverlay : Window
 
     private BitmapSource CreateFinalImage()
     {
-        if (_editor == null || _selectedImage == null) throw new InvalidOperationException("Não há captura ativa.");
-        _editor.UpdateLayout();
-        var width = (int)Math.Ceiling(_editor.ActualWidth);
-        var height = (int)Math.Ceiling(_editor.ActualHeight);
-        var annotations = _editor.RenderAnnotations();
-        var visual = new DrawingVisual();
-        using (var context = visual.RenderOpen())
-        {
-            context.DrawImage(_selectedImage, new Rect(0, 0, width, height));
-            context.DrawImage(annotations, new Rect(0, 0, width, height));
-        }
-        var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
-        bitmap.Render(visual);
-        bitmap.Freeze();
-        return bitmap;
+        if (_editor == null) throw new InvalidOperationException("Não há captura ativa.");
+        return _editor.RenderImage();
     }
 
     private void SaveCapture()

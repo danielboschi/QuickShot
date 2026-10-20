@@ -7,15 +7,18 @@ namespace QuickShot;
 internal sealed class TrayService : IDisposable
 {
     private readonly NotifyIcon _icon;
+    private readonly Icon _trayIcon;
+    private readonly ContextMenuStrip _menu;
     private PrintScreenGuideForm? _guide;
     public event Action? CaptureRequested, ExitRequested;
     public TrayService()
     {
-        var menu = new ContextMenuStrip();
+        var menu = _menu = new ContextMenuStrip();
         menu.Items.Add("Capturar tela", null, (_, _) => CaptureRequested?.Invoke());
         menu.Items.Add("Configurar Print Screen no Windows…", null, OpenPrintScreenSettings);
         menu.Items.Add("Sair", null, (_, _) => ExitRequested?.Invoke());
-        _icon = new NotifyIcon { Icon = AppIcon.CreateIcon(), Text = "QuickShot", ContextMenuStrip = menu, Visible = true };
+        _trayIcon = AppIcon.CreateIcon();
+        _icon = new NotifyIcon { Icon = _trayIcon, Text = "QuickShot", ContextMenuStrip = menu, Visible = true };
         _icon.DoubleClick += (_, _) => CaptureRequested?.Invoke();
     }
     private void OpenPrintScreenSettings(object? sender, EventArgs e)
@@ -57,5 +60,5 @@ internal sealed class TrayService : IDisposable
             System.Windows.MessageBox.Show($"Não foi possível reiniciar o QuickShot.\n\n{exception.Message}", "QuickShot", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
     }
-    public void Dispose() { _guide?.Close(); _icon.Visible = false; _icon.Dispose(); }
+    public void Dispose() { _guide?.Dispose(); _icon.Visible = false; _icon.Dispose(); _menu.Dispose(); _trayIcon.Dispose(); }
 }

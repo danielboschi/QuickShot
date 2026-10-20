@@ -13,8 +13,12 @@ internal static class DebugLog
         {
             lock (Sync)
             {
-                File.AppendAllText(Path, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {message}{Environment.NewLine}");
-                if (exception != null) File.AppendAllText(Path, exception + Environment.NewLine);
+                // Limite o uso de disco, preservando também o arquivo anterior.
+                if (File.Exists(Path) && new FileInfo(Path).Length >= 1024 * 1024)
+                    File.Move(Path, Path + ".old", overwrite: true);
+                var entry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {message}{Environment.NewLine}";
+                if (exception != null) entry += exception + Environment.NewLine;
+                File.AppendAllText(Path, entry);
             }
         }
         catch { /* O log jamais deve afetar a captura. */ }

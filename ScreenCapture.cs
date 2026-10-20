@@ -2,7 +2,6 @@ using System.Drawing;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Interop;
 
 namespace QuickShot;
 
@@ -10,16 +9,18 @@ internal static class ScreenCapture
 {
     public static BitmapSource Capture(Rect area)
     {
-        using var bitmap = new Bitmap((int)area.Width, (int)area.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+        using var bitmap = new Bitmap((int)area.Width, (int)area.Height, System.Drawing.Imaging.PixelFormat.Format32bppRgb);
         using (var graphics = Graphics.FromImage(bitmap)) graphics.CopyFromScreen((int)area.X, (int)area.Y, 0, 0, bitmap.Size, CopyPixelOperation.SourceCopy);
-        var hBitmap = bitmap.GetHbitmap();
+        // Leia o buffer existente, sem criar uma segunda imagem GDI com GetHbitmap.
+        var pixels = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height),
+            System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppRgb);
         try
         {
-            var source = Imaging.CreateBitmapSourceFromHBitmap(hBitmap, nint.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+            var source = BitmapSource.Create(bitmap.Width, bitmap.Height, 96, 96, PixelFormats.Bgr32,
+                null, pixels.Scan0, checked(pixels.Stride * bitmap.Height), pixels.Stride);
             source.Freeze();
             return source;
         }
-        finally { DeleteObject(hBitmap); }
+        finally { bitmap.UnlockBits(pixels); }
     }
-    [System.Runtime.InteropServices.DllImport("gdi32.dll")] private static extern bool DeleteObject(nint hObject);
 }

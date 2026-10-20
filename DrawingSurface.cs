@@ -27,11 +27,17 @@ public sealed class DrawingSurface : Canvas
     }
     public void SetImage(ImageSource image)
     {
-        Children.Clear(); _undo.Clear(); _redo.Clear();
+        ClearImage();
         Width = image.Width; Height = image.Height;
         Children.Add(new Image { Source = image, Width = Width, Height = Height, IsHitTestVisible = false });
     }
-    public BitmapSource RenderAnnotations()
+    public void ClearImage()
+    {
+        if (IsMouseCaptured) ReleaseMouseCapture();
+        Children.Clear(); _undo.Clear(); _redo.Clear();
+        _preview = null; _freehand = null;
+    }
+    public BitmapSource RenderImage()
     {
         if (Children.Count == 0) throw new InvalidOperationException("A imagem de fundo não foi definida.");
         UpdateLayout();
@@ -40,6 +46,7 @@ public sealed class DrawingSurface : Canvas
         var visual = new DrawingVisual();
         using (var context = visual.RenderOpen())
         {
+            context.DrawImage(((Image)Children[0]).Source, new Rect(0, 0, width, height));
             foreach (UIElement child in Children)
             {
                 if (ReferenceEquals(child, Children[0]) || child.Visibility != Visibility.Visible) continue;

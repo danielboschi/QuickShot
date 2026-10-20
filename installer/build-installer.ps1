@@ -29,4 +29,7 @@ if ($LASTEXITCODE -ne 0) { throw "dotnet publish falhou com código $LASTEXITCOD
 New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
 & $isccPath $issFile
 if ($LASTEXITCODE -ne 0) { throw "Inno Setup falhou com código $LASTEXITCODE." }
-Write-Host "Instalador criado em: $(Join-Path $outputDir 'QuickShot-Setup-1.0.0-x64.exe')"
+$installerPath = Join-Path $outputDir 'QuickShot-Setup-1.0.1-x64.exe'
+$installerHash = (Get-FileHash -LiteralPath $installerPath -Algorithm SHA256).Hash.ToLowerInvariant()
+"$installerHash  $(Split-Path -Leaf $installerPath)" | Set-Content -LiteralPath (Join-Path $outputDir 'SHA256SUMS.txt') -Encoding ascii
+Write-Host "Instalador criado em: $installerPath"

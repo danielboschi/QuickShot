@@ -22,7 +22,8 @@ internal static class ClipboardService
         encoder.Save(stream);
         var data = new DataObject();
         data.SetData(DataFormats.Bitmap, opaque);
-        data.SetData("PNG", new MemoryStream(stream.ToArray()));
+        stream.Position = 0;
+        data.SetData("PNG", stream);
         Clipboard.SetDataObject(data, true);
     }
 }

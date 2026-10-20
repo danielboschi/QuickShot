@@ -1,5 +1,5 @@
 #define AppName "QuickShot"
-#define AppVersion "1.0.0"
+#define AppVersion "1.0.1"
 #define AppPublisher "QuickShot"
 #define AppExeName "QuickShot.exe"
 
@@ -31,7 +31,7 @@ Name: "startupicon"; Description: "Iniciar o QuickShot automaticamente ao entrar
 Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 
 [Files]
-Source: "..\publish\win-x64\*"; DestDir: "{app}"; Excludes: "*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\publish\win-x64\*"; DestDir: "{app}"; Excludes: "*.pdb,*.log,*.log.old"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\QuickShot"; Filename: "{app}\{#AppExeName}"

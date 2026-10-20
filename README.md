@@ -7,6 +7,7 @@ Feito em C#/.NET 8 com WPF, o QuickShot funciona inteiramente no computador: **n
 ## Recursos
 
 - Seleção de uma região da tela com o mouse.
+- Tela congelada ao iniciar a captura, preservando os tooltips visíveis durante a seleção.
 - Anotações com caneta, linha, seta, retângulo, elipse, texto e marca-texto.
 - Borracha para remover anotações, além de desfazer e refazer.
 - Escolha de cor e espessura do traço.
@@ -19,13 +20,13 @@ O QuickShot não coleta dados pessoais para análise, publicidade ou rastreament
 
 As capturas são processadas localmente, na memória do computador. Ao copiar uma captura, ela é colocada na área de transferência do Windows; ao salvar, o arquivo PNG é gravado no local escolhido por você.
 
-Para diagnóstico, o aplicativo grava um arquivo **local** chamado `quickshot-debug.log`, ao lado do executável. Esse arquivo pode conter horários, eventos de funcionamento, detalhes de erros e caminhos das imagens salvas. Ele não contém as imagens capturadas e não é enviado pelo QuickShot.
+Para diagnóstico, o aplicativo grava um arquivo **local** chamado `quickshot-debug.log`, ao lado do executável. Ao atingir 1 MiB, o log é rotacionado para `quickshot-debug.log.old`, substituindo o anterior. Esses arquivos podem conter horários, eventos de funcionamento, detalhes de erros e caminhos das imagens salvas. Eles não contêm as imagens capturadas e não são enviados pelo QuickShot.
 
 Essas garantias descrevem o comportamento do QuickShot. Recursos do Windows, como a sincronização da área de transferência, e outros programas usados para abrir ou compartilhar as imagens têm configurações próprias.
 
 ## Instalação
 
-Na seção **Releases** deste repositório, baixe `QuickShot-Setup-1.0.0-x64.exe` quando a versão estiver publicada e execute o instalador.
+Na seção [Releases](https://github.com/danielboschi/QuickShot/releases) deste repositório, baixe `QuickShot-Setup-1.0.1-x64.exe` e execute o instalador.
 
 O instalador é destinado a Windows x64 e inclui o runtime .NET: não é necessário instalar o .NET separadamente. Ele instala para o usuário atual, sem exigir privilégios de administrador, cria o atalho do menu Iniciar e oferece opções de atalho na área de trabalho e inicialização automática ao entrar no Windows. A opção de inicialização automática vem marcada e pode ser desmarcada durante a instalação.
 
@@ -45,6 +46,8 @@ O seletor `Ctrl+Print Screen` alterna o atalho global do QuickShot entre `Print 
 
 ## Compilar
 
+A análise de tamanho, otimizações de memória e resultados da verificação estão em [PERFORMANCE.md](PERFORMANCE.md).
+
 Requer o **.NET 8 SDK** no Windows:
 
 ```powershell
@@ -56,10 +59,33 @@ A preparação do ambiente de desenvolvimento pode exigir internet para obter o 
 
 ## Gerar instalador
 
+### Pastas de saída
+
+| Pasta | Conteúdo e uso |
+| --- | --- |
+| `publish\win-x64` | Aplicação portátil em Release, com runtime incluído. Abra `QuickShot.exe` nesta pasta para testar a versão publicada. |
+| `publish\win-x64-compact` | Mesmos recursos, sem runtime incluído. Requer .NET Desktop Runtime 8 x64 instalado. Gerada com `build-portable.ps1 -Compact`. |
+| `dist` | Instalador gerado a partir de `publish\win-x64` e arquivo de verificação SHA-256. |
+| `bin\Debug` | Compilação de desenvolvimento produzida por `dotnet build`. |
+| `bin\Release` | Arquivos intermediários da compilação Release; use a aplicação em `publish\win-x64` para testar. |
+| `obj` | Arquivos intermediários do .NET; não contém a aplicação para uso. |
+
+Antes de testar uma nova compilação, encerre a instância anterior pelo menu do QuickShot na bandeja do Windows e abra `publish\win-x64\QuickShot.exe`.
+
+Para atualizar somente a aplicação portátil:
+
+```powershell
+.\build-portable.ps1
+```
+
+Para gerar a variante compacta, use `.\build-portable.ps1 -Compact`. O instalador continua incluindo o runtime para funcionar em computadores sem .NET instalado.
+
+### Instalador
+
 Instale o Inno Setup 6 e execute no PowerShell:
 
 ```powershell
 .\installer\build-installer.ps1
 ```
 
-O instalador autocontido para Windows x64 será criado em `dist\QuickShot-Setup-1.0.0-x64.exe`. Ele instala para o usuário atual, cria o atalho do menu Iniciar, oferece um atalho opcional na área de trabalho e marca por padrão a inicialização automática ao entrar no Windows.
+O instalador autocontido para Windows x64 será criado em `dist\QuickShot-Setup-1.0.1-x64.exe`. Ele instala para o usuário atual, cria o atalho do menu Iniciar, oferece um atalho opcional na área de trabalho e marca por padrão a inicialização automática ao entrar no Windows.
